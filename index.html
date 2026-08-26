@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新生成长护照生成器</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    padding: 20px;
+}
+h1 {
+    text-align: center;
+    color: #2c5c4c;
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+.form-panel {
+    width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.preview-panel {
+    flex: 1;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.page-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.page-tab {
+    padding: 8px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.page-tab:hover {
+    border-color: #2c5c4c;
+}
+.page-tab.active {
+    background: #2c5c4c;
+    color: #fff;
+    border-color: #2c5c4c;
+}
+.field-group {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eee;
+}
+.field-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.field-group h3 {
+    font-size: 16px;
+    color: #2c5c4c;
+    margin-bottom: 12px;
+}
+.field-item {
+    margin-bottom: 12px;
+}
+.field-item label {
+    display: block;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 6px;
+}
+.field-item input[type="text"],
+.field-item textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+.field-item textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+.field-item input[type="text"]:focus,
+.field-item textarea:focus {
+    outline: none;
+    border-color: #2c5c4c;
+}
+.preview-title {
+    font-size: 20px;
+    color: #2c5c4c;
+    margin-bottom: 16px;
+    font-weight: bold;
+}
+.preview-title::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 20px;
+    background: #2c5c4c;
+    margin-right: 10px;
+    vertical-align: middle;
+    border-radius: 2px;
+}
+#previewCanvas {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 2px solid #e8e8e8;
+}
+.action-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+.btn-primary {
+    background: #2c5c4c;
+    color: #fff;
+}
+.btn-primary:hover {
+    background: #1e4235;
+}
+.btn-success {
+    background: #4caf50;
+    color: #fff;
+}
+.btn-success:hover {
+    background: #3d8b40;
+}
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+.page-hidden { display: none; }
+
+@media (max-width: 768px) {
+    body {
+        padding: 12px;
+    }
+    h1 {
+        font-size: 22px;
+        margin-bottom: 6px;
+    }
+    .subtitle {
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
+    .container {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .form-panel {
+        width: 100%;
+        padding: 18px;
+        order: 2;
+    }
+    .preview-panel {
+        width: 100%;
+        padding: 16px;
+        order: 1;
+    }
+    .page-tabs {
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+    .page-tab {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    .action-buttons {
+        gap: 8px;
+    }
+    .btn {
+        padding: 10px 16px;
+        font-size: 14px;
+        flex: 1;
+        text-align: center;
+    }
+    .preview-title {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    .field-group h3 {
+        font-size: 15px;
+    }
+}
+</style>
+</head>
+<body>
+
+<h1>🌟 26级新生成长护照生成器</h1>
+<p class="subtitle">填写信息，一键生成专属成长护照</p>
+
+<div class="container">
+    <div class="form-panel">
+        <div class="page-tabs">
+            <div class="page-tab active" data-page="1">第1页 · 个人信息</div>
+            <div class="page-tab" data-page="2">第2页 · 成长路线</div>
+            <div class="page-tab" data-page="3">第3页 · 项目记录</div>
+            <div class="page-tab" data-page="4">第4页 · 职业规划</div>
+            <div class="page-tab" data-page="5">第5页 · 成长足迹</div>
+        </div>
+
+        <div id="page1-form" class="page-form">
+            <div class="field-group">
+                <h3>📋 个人信息</h3>
+                <div class="field-item">
+                    <label>证件照</label>
+                    <input type="file" id="photo" accept="image/*" style="padding: 8px; border: 1px solid #ddd; border-radius: 8px; width: 100%; background: #fafafa;">
+                    <p style="font-size: 12px; color: #888; margin-top: 4px;">建议上传一寸证件照（红底/蓝底/白底均可）</p>
+                </div>
+                <div class="field-item">
+                    <label>姓名</label>
+                    <input type="text" id="name" value="" autocomplete="off">
+                </div>
+                <div class="field-item">
+                    <label>学号</label>
+                    <input type="text" id="stuId" value="" autocomplete="off">
+                </div>
+                <div class="field-item">
+                    <label>班级</label>
+                    <input type="text" id="cls" value="" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <div id="page2-form" class="page-form page-hidden">
+            <div class="field-group">
+                <h3>🏫 学校简介与成长路线</h3>
+                <div class="field-item">
+                    <label>基础学习期</label>
+                    <textarea id="stage1"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>专业技能提升期</label>
+                    <textarea id="stage2"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>项目实践期</label>
+                    <textarea id="stage3"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>职业规划期</label>
+                    <textarea id="stage4"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="page3-form" class="page-form page-hidden">
+            <div class="field-group">
+                <h3>🏆 项目实践/竞赛参与记录</h3>
+                <div class="field-item">
+                    <label>项目名称</label>
+                    <input type="text" id="projectName" value="" autocomplete="off">
+                </div>
+                <div class="field-item">
+                    <label>时间</label>
+                    <input type="text" id="projectTime" value="" autocomplete="off">
+                </div>
+                <div class="field-item">
+                    <label>角色</label>
+                    <input type="text" id="projectRole" value="" autocomplete="off">
+                </div>
+                <div class="field-item">
+                    <label>收获与反思</label>
+                    <textarea id="projectGain"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="page4-form" class="page-form page-hidden">
+            <div class="field-group">
+                <h3>🎯 职业规划与梦想版</h3>
+                <div class="field-item">
+                    <label>短期目标</label>
+                    <textarea id="shortTerm"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>长期愿景</label>
+                    <textarea id="longTerm"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>提升计划</label>
+                    <textarea id="improvePlan"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="page5-form" class="page-form page-hidden">
+            <div class="field-group">
+                <h3>📈 成长足迹与反思</h3>
+                <div class="field-item">
+                    <label>大一 · 学习成果</label>
+                    <textarea id="y1_1"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大一 · 技能提升</label>
+                    <textarea id="y1_2"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大一 · 面临挑战</label>
+                    <textarea id="y1_3"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大一 · 应对计划</label>
+                    <textarea id="y1_4"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大二 · 学习成果</label>
+                    <textarea id="y2_1"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大二 · 技能提升</label>
+                    <textarea id="y2_2"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大二 · 面临挑战</label>
+                    <textarea id="y2_3"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大二 · 应对计划</label>
+                    <textarea id="y2_4"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大三 · 学习成果</label>
+                    <textarea id="y3_1"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大三 · 技能提升</label>
+                    <textarea id="y3_2"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大三 · 面临挑战</label>
+                    <textarea id="y3_3"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大三 · 应对计划</label>
+                    <textarea id="y3_4"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大四 · 学习成果</label>
+                    <textarea id="y4_1"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大四 · 技能提升</label>
+                    <textarea id="y4_2"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大四 · 面临挑战</label>
+                    <textarea id="y4_3"></textarea>
+                </div>
+                <div class="field-item">
+                    <label>大四 · 应对计划</label>
+                    <textarea id="y4_4"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="generatePDF()">生成PDF</button>
+            <button class="btn btn-success" onclick="downloadPDF()">下载PDF</button>
+            <button class="btn btn-secondary" onclick="resetAll()">重置</button>
+        </div>
+    </div>
+
+    <div class="preview-panel">
+        <div class="preview-title">实时预览（当前页）</div>
+        <canvas id="previewCanvas" width="2494" height="1771"></canvas>
+    </div>
+</div>
+
+<script>
+const pageImages = {};
+const canvas = document.getElementById('previewCanvas');
+const ctx = canvas.getContext('2d');
+let currentPage = 1;
+let finalPdf = null;
+let userPhoto = null;
+
+function generatePDF() {
+    const img1 = pageImages[1];
+    if (!img1) {
+        alert('图片加载中，请稍候...');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const w = img1.naturalWidth;
+    const h = img1.naturalHeight;
+    const pdf = new jsPDF({
+        orientation: w > h ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [w, h]
+    });
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = w;
+    tempCanvas.height = h;
+    const tctx = tempCanvas.getContext('2d');
+
+    for (let i = 1; i <= 5; i++) {
+        tctx.clearRect(0, 0, w, h);
+        drawFullPage(i, tctx, 0);
+        const imgData = tempCanvas.toDataURL('image/png');
+        if (i > 1) {
+            pdf.addPage([w, h]);
+        }
+        pdf.addImage(imgData, 'PNG', 0, 0, w, h);
+    }
+
+    finalPdf = pdf;
+    alert('生成完成！点击"下载PDF"保存。');
+}
+
+function downloadPDF() {
+    if (!finalPdf) {
+        generatePDF();
+        if (!finalPdf) return;
+    }
+    finalPdf.save('成长护照_完整版.pdf');
+}
+
+const pageConfig = {
+    1: {
+        bg: '成长护照_01.png',
+        photo: { xRatio: 0.177, yRatio: 0.145, wRatio: 0.155, hRatio: 0.306 },
+        fields: [
+            { id: 'name', xRatio: 0.220, yRatio: 0.580, sizeRatio: 0.016, color: '#000000' },
+            { id: 'stuId', xRatio: 0.220, yRatio: 0.710, sizeRatio: 0.0145, color: '#333333' },
+            { id: 'cls', xRatio: 0.220, yRatio: 0.840, sizeRatio: 0.0145, color: '#333333' }
+        ]
+    },
+    2: {
+        bg: '成长护照_02.png',
+        fields: [
+            { id: 'stage1', xRatio: 0.565, yRatio: 0.240, sizeRatio: 0.0115, color: '#333333', maxWidth: 0.25, lineHeight: 1.7, baseline: 'top' },
+            { id: 'stage2', xRatio: 0.565, yRatio: 0.415, sizeRatio: 0.0115, color: '#333333', maxWidth: 0.25, lineHeight: 1.7, baseline: 'top' },
+            { id: 'stage3', xRatio: 0.565, yRatio: 0.590, sizeRatio: 0.0115, color: '#333333', maxWidth: 0.25, lineHeight: 1.7, baseline: 'top' },
+            { id: 'stage4', xRatio: 0.565, yRatio: 0.770, sizeRatio: 0.0115, color: '#333333', maxWidth: 0.25, lineHeight: 1.7, baseline: 'top' }
+        ]
+    },
+    3: {
+        bg: '成长护照_03.png',
+        fields: [
+            { id: 'projectName', xRatio: 0.56, yRatio: 0.24, sizeRatio: 0.014, color: '#333333' },
+            { id: 'projectTime', xRatio: 0.57, yRatio: 0.42, sizeRatio: 0.0125, color: '#333333' },
+            { id: 'projectRole', xRatio: 0.57, yRatio: 0.60, sizeRatio: 0.0125, color: '#333333' },
+            { id: 'projectGain', xRatio: 0.57, yRatio: 0.78, sizeRatio: 0.0115, color: '#333333', maxWidth: 0.38, lineHeight: 1.8 }
+        ]
+    },
+    4: {
+        bg: '成长护照_04.png',
+        fields: [
+            { id: 'shortTerm', xRatio: 0.58, yRatio: 0.34, sizeRatio: 0.0125, color: '#333333', maxWidth: 0.34, lineHeight: 1.8 },
+            { id: 'longTerm', xRatio: 0.58, yRatio: 0.56, sizeRatio: 0.0125, color: '#333333', maxWidth: 0.34, lineHeight: 1.8 },
+            { id: 'improvePlan', xRatio: 0.58, yRatio: 0.77, sizeRatio: 0.0125, color: '#333333', maxWidth: 0.34, lineHeight: 1.8 }
+        ]
+    },
+    5: {
+        bg: '成长护照_05.png',
+        fields: [
+            { id: 'y1_1', xRatio: 0.098, yRatio: 0.344, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y1_2', xRatio: 0.196, yRatio: 0.344, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y1_3', xRatio: 0.295, yRatio: 0.344, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y1_4', xRatio: 0.393, yRatio: 0.344, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y2_1', xRatio: 0.098, yRatio: 0.477, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y2_2', xRatio: 0.196, yRatio: 0.477, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y2_3', xRatio: 0.295, yRatio: 0.477, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y2_4', xRatio: 0.393, yRatio: 0.477, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y3_1', xRatio: 0.098, yRatio: 0.607, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y3_2', xRatio: 0.196, yRatio: 0.607, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y3_3', xRatio: 0.295, yRatio: 0.607, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y3_4', xRatio: 0.393, yRatio: 0.607, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y4_1', xRatio: 0.098, yRatio: 0.740, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y4_2', xRatio: 0.196, yRatio: 0.740, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y4_3', xRatio: 0.295, yRatio: 0.740, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' },
+            { id: 'y4_4', xRatio: 0.393, yRatio: 0.740, sizeRatio: 0.0078, color: '#333333', maxWidth: 0.082, lineHeight: 1.5, baseline: 'top' }
+        ]
+    }
+};
+
+function loadImages() {
+    const pages = [1, 2, 3, 4, 5];
+    let loaded = 0;
+    pages.forEach(p => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            pageImages[p] = img;
+            loaded++;
+            if (loaded === pages.length) {
+                drawPage(currentPage);
+            }
+        };
+        img.onerror = () => {
+            console.error('加载失败:', pageConfig[p].bg);
+        };
+        img.src = pageConfig[p].bg;
+    });
+}
+
+function drawPage(pageNum) {
+    const img = pageImages[pageNum];
+    if (!img) return;
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(img, 0, 0, w, h);
+    const config = pageConfig[pageNum];
+    if (config.photo && userPhoto) {
+        const p = config.photo;
+        const px = w * p.xRatio;
+        const py = h * p.yRatio;
+        const pw = w * p.wRatio;
+        const ph = h * p.hRatio;
+        ctx.drawImage(userPhoto, px, py, pw, ph);
+    }
+    const fields = config.fields;
+    fields.forEach(field => {
+        const el = document.getElementById(field.id);
+        if (!el) return;
+        const text = el.value;
+        if (!text) return;
+        const x = w * field.xRatio;
+        const y = h * field.yRatio;
+        const fontSize = Math.round(w * field.sizeRatio);
+        ctx.fillStyle = field.color;
+        ctx.font = `normal ${fontSize}px "Microsoft YaHei", "PingFang SC", sans-serif`;
+        ctx.textBaseline = field.baseline || 'bottom';
+        if (field.maxWidth && field.lineHeight) {
+            drawWrappedText(text, x, y, w * field.maxWidth, fontSize * field.lineHeight, fontSize, field.baseline || 'bottom');
+        } else {
+            ctx.fillText(text, x, y);
+        }
+    });
+}
+
+function drawWrappedText(text, x, y, maxWidth, lineHeight, fontSize, baseline) {
+    const chars = text.split('');
+    let line = '';
+    let lines = [];
+    for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line !== '') {
+            lines.push(line);
+            line = chars[i];
+        } else {
+            line = testLine;
+        }
+    }
+    if (line) lines.push(line);
+    lines.forEach((ln, i) => {
+        ctx.fillText(ln, x, y + i * lineHeight);
+    });
+}
+
+function drawFullPage(pageNum, targetCtx, offsetY) {
+    const img = pageImages[pageNum];
+    if (!img) return;
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    targetCtx.drawImage(img, 0, offsetY, w, h);
+    const config = pageConfig[pageNum];
+    if (config.photo && userPhoto) {
+        const p = config.photo;
+        const px = w * p.xRatio;
+        const py = offsetY + h * p.yRatio;
+        const pw = w * p.wRatio;
+        const ph = h * p.hRatio;
+        targetCtx.drawImage(userPhoto, px, py, pw, ph);
+    }
+    const fields = config.fields;
+    fields.forEach(field => {
+        const el = document.getElementById(field.id);
+        if (!el) return;
+        const text = el.value;
+        if (!text) return;
+        const x = w * field.xRatio;
+        const y = offsetY + h * field.yRatio;
+        const fontSize = Math.round(w * field.sizeRatio);
+        targetCtx.fillStyle = field.color;
+        targetCtx.font = `normal ${fontSize}px "Microsoft YaHei", "PingFang SC", sans-serif`;
+        targetCtx.textBaseline = field.baseline || 'bottom';
+        if (field.maxWidth && field.lineHeight) {
+            const chars = text.split('');
+            let line = '';
+            let lines = [];
+            for (let i = 0; i < chars.length; i++) {
+                const testLine = line + chars[i];
+                const metrics = targetCtx.measureText(testLine);
+                if (metrics.width > w * field.maxWidth && line !== '') {
+                    lines.push(line);
+                    line = chars[i];
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line) lines.push(line);
+            lines.forEach((ln, i) => {
+                targetCtx.fillText(ln, x, y + i * fontSize * field.lineHeight);
+            });
+        } else {
+            targetCtx.fillText(text, x, y);
+        }
+    });
+}
+
+function resetAll() {
+    document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+        el.value = '';
+    });
+    userPhoto = null;
+    document.getElementById('photo').value = '';
+    drawPage(currentPage);
+}
+
+document.querySelectorAll('.page-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.page-form').forEach(f => f.classList.add('page-hidden'));
+        const page = parseInt(tab.dataset.page);
+        currentPage = page;
+        document.getElementById(`page${page}-form`).classList.remove('page-hidden');
+        drawPage(page);
+    });
+});
+
+document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+    el.addEventListener('input', () => {
+        drawPage(currentPage);
+    });
+});
+
+document.getElementById('photo').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const img = new Image();
+        img.onload = () => {
+            userPhoto = img;
+            drawPage(currentPage);
+        };
+        img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+    el.value = '';
+});
+
+setTimeout(() => {
+    document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+        el.value = '';
+    });
+}, 100);
+
+setTimeout(() => {
+    document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+        el.value = '';
+    });
+}, 500);
+
+loadImages();
+</script>
+</body>
+</html>
